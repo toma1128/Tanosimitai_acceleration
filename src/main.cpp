@@ -16,9 +16,10 @@ float x, y, z, theta;
 int R1 = 20, R2 = 40, R3 = 60;
 int X0 = 120, Y0 = 67;
 
-int pattern = 0;    //筋トレの種類を切り替えるための変数
-int count = -1;      //筋トレした回数をカウントする変数
+int pattern = 1;        //筋トレの種類を切り替えるための変数
+int count = -1;         //筋トレした回数をカウントする変数
 bool approval = false;  //部屋を開けるのを承認する変数
+int goal = 20;          //筋トレ達成目標回数
 
 void setup() {
   M5.begin();
@@ -27,7 +28,6 @@ void setup() {
   Serial.begin(115200);
   delay(10);
 }
-
 
 /**
  * 加速度の値をとって計算するメソッド
@@ -63,33 +63,39 @@ void loop() {
     //筋トレの種類によって処理を分ける
     switch(pattern){
         case 0 : {  //スクワッドの処理(Y軸メイン)
-            Serial.println(accY);   //確認用
-            if(fabs(oldY - accY) >= 0.5){   //前回との誤差が0.4以上(絶対値換算)あれば
-                count++;
-                delay(1500);  //判定後、少し待つ
+          Serial.println(accY);   //確認用
+          if(fabs(oldY - accY) >= 0.5){   //前回との誤差が0.5以上(絶対値換算)あれば
+              count++;
+              delay(1500);  //判定後、少し待つ
 
-                //エラーで回数を追加されるのを阻止するため現在の値を入れる
-                measure();
-                oldY = accY;
-            }
-            break;
+              //エラーで回数を追加されるのを阻止するため現在の値を入れる
+              measure();
+              oldY = accY;
+          }
+          break;
         }
-        case 1 : {  //腕立ての処理()
-            Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);
-            if(true){
-                count++;
-            }
-        }
+        case 1 : {  //腕立ての処理(Z軸メイン)
+          Serial.println(accW); //確認用
+          if(fabs(oldW - accW) >= 0.3){
+            count++;
+            delay(1500);
 
+            //エラーで回数を追加されるのを阻止するため現在の値を入れる
+            measure();
+            oldW = accW;
+          }
+        }
         default : break;
     }
+
+    Serial.println();
     Serial.println(count);
     Serial.println();
 
-    if(count >= 20){    //筋トレ20回終われば、部屋を開けるための変数がtrueになる
+    if(count >= goal){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
       approval = true;
       if(approval) {
-        Serial.println("クリア、お疲れ様です");
+        Serial.println("クリア");
         Serial.println();
       }
     }
@@ -99,5 +105,5 @@ void loop() {
     oldY = accY;
     oldW = accW;
 
-  delay(150);   //  チャタリング防止&判定の時間を少し緩める
+    delay(150);   //  チャタリング防止&判定の時間を少し緩める
 }
