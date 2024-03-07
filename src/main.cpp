@@ -16,12 +16,10 @@ float x, y, z, theta;
 int R1 = 20, R2 = 40, R3 = 60;
 int X0 = 120, Y0 = 67;
 
-int minY,minU,minW; //下の加速度の値
-
 int pattern = 2;        //筋トレの種類を切り替えるための変数
 float count = 0;         //筋トレした回数をカウントする変数(エラーで回数+1されるため-1スタート)
 bool approval = false;  //部屋を開けるのを承認する変数
-int goal = 20;          //筋トレ達成目標回数
+const int GOAL = 20;          //筋トレ達成目標回数
 
 void setup() {
   M5.begin();
@@ -56,8 +54,9 @@ void measure(){
   }
   
 }
+
 /**
- * 
+ * 筋トレの回数を記録するためのメソッド
 */
 void counter(){
   switch(pattern){
@@ -81,7 +80,7 @@ void counter(){
 
         //エラーで回数を追加されるのを阻止するため現在の値を入れる
         measure();
-         oldW = accW;
+        oldW = accW;
       }
       break;
     }
@@ -106,11 +105,23 @@ void counter(){
   Serial.println();
 }
 
+bool minus = false;
+bool plus = false;
+
+void test_counter(){
+  Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //確認用
+  if(accY < oldY && fabs(oldY - accY) >= 0.3) minus = true;
+  if(accY > oldY && fabs(oldY - accY) >= 0.3) plus = true;
+  if(plus && minus)count++;
+
+  Serial.println(count);
+}
+
 void loop() {
     measure();  //加速度計測メソッド呼び出し
-    counter();  //回数計測メソッド呼び出し
+    test_counter();  //回数計測メソッド呼び出し
 
-    if(count >= goal){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
+    if(count >= GOAL){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
       approval = true;
       if(approval) {
         Serial.println("クリア");
