@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <M5StickCPlus.h>
 #include <math.h>
+#include <cstdlib>
 
 TFT_eSprite sprite = TFT_eSprite(&M5.Lcd);
 
@@ -18,7 +19,7 @@ float x, y, z, theta;
 int R1 = 20, R2 = 40, R3 = 60;
 int X0 = 120, Y0 = 67;
 
-int training_pattern = 1;        //筋トレの種類を切り替えるための変数
+int training_pattern;        //筋トレの種類を切り替えるための変数
 int count = 0;          //筋トレした回数をカウントする変数
 bool approval = false;  //部屋を開けるのを承認する変数
 const int GOAL = 10;    //筋トレ達成目標回数
@@ -144,6 +145,7 @@ void loop() {
   M5.update();
   if(M5.BtnA.wasPressed()){ //Aボタンが押されたら計測開始
     digitalWrite(M5LED, HIGH);
+    training_pattern = rand() % 3;
 
     while(true){
       measure();  //加速度計測メソッド呼び出し
