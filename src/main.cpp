@@ -5,7 +5,7 @@
 
 TFT_eSprite sprite = TFT_eSprite(&M5.Lcd);
 
-const int M5LED = 10;
+const int M5LED = 10;   //LEDのピン番号
 
 float OFFSET_X = 0, OFFSET_Y = 0, OFFSET_Z = -0.08;
 float accX;
@@ -30,8 +30,8 @@ bool plus = false;      //判定がプラスの時にtrueにする変数
 void setup() {
   M5.begin();
   M5.IMU.Init();
-  pinMode(M5LED, OUTPUT);
-  digitalWrite(M5LED, HIGH);
+  pinMode(M5LED, OUTPUT);     //LEDの初期設定
+  digitalWrite(M5LED, HIGH);  //LEDを消す(念のため)
   
   M5.Lcd.setRotation(3);
   Serial.begin(115200);
@@ -81,8 +81,7 @@ void training(){
         oldY = accY;
       }
       break;
-    }
-    case 1 : {  //腕立ての処理(Z軸メイン)
+    }case 1 : {  //腕立ての処理(Z軸メイン)
       Serial.println(accW); //確認用
 
       if(accW < oldW && fabs(oldW - accW) >= 0.2 && !minus) { //現在のZ軸がマイナスかつ絶対値の誤差が0.3の時(一度も処理を通ってない場合)
@@ -106,8 +105,7 @@ void training(){
         oldW = accW;
       }
       break;
-    }
-    case 2 : {  //腹筋の処理()
+    }case 2 : {  //腹筋の処理(Z軸メイン)
       Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG\n", accU, accY, accW);  //確認用
       
       if(fabs(oldY - accY) >= 0.3){ //Y軸の絶対値の誤差が0.4かつZ軸の絶対値の誤差が0.3
@@ -144,8 +142,8 @@ int stopper = 0;
 void loop() {
   M5.update();
   if(M5.BtnA.wasPressed()){ //Aボタンが押されたら計測開始
-    digitalWrite(M5LED, HIGH);
-    training_pattern = rand() % 3;
+    digitalWrite(M5LED, HIGH);  //LEDを消す
+    training_pattern = rand() % 3;  //ランダムに筋トレを選択
 
     while(true){
       measure();  //加速度計測メソッド呼び出し
@@ -153,14 +151,14 @@ void loop() {
 
       if(count >= GOAL && stopper == 0){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
         approval = true;
-        digitalWrite(M5LED,LOW);
-        M5.Beep.beep();
+        digitalWrite(M5LED,LOW);    //LEDをつける
+        M5.Beep.beep();             //一秒間音を鳴らす
         delay(1000);
-        M5.Beep.end();
+        M5.Beep.end();              //音を消す
 
-        count = 0;
+        count = 0;                  //回数の初期化
 
-        break;
+        break;                      //ループから出る
       }
 
       //前回の値を保存しておく処理
@@ -174,5 +172,6 @@ void loop() {
   }
   delay(10);
 }
+
 
 //Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //加速度を確認するためのコード
