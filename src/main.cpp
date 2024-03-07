@@ -4,6 +4,8 @@
 
 TFT_eSprite sprite = TFT_eSprite(&M5.Lcd);
 
+const int M5LED = 10;
+
 float OFFSET_X = 0, OFFSET_Y = 0, OFFSET_Z = -0.08;
 float accX;
 float accY;             //Y軸
@@ -16,14 +18,20 @@ float x, y, z, theta;
 int R1 = 20, R2 = 40, R3 = 60;
 int X0 = 120, Y0 = 67;
 
-int pattern = 2;        //筋トレの種類を切り替えるための変数
-float count = 0;         //筋トレした回数をカウントする変数(エラーで回数+1されるため-1スタート)
+int training_pattern = 1;        //筋トレの種類を切り替えるための変数
+int count = 0;          //筋トレした回数をカウントする変数
 bool approval = false;  //部屋を開けるのを承認する変数
-const int GOAL = 20;          //筋トレ達成目標回数
+const int GOAL = 10;    //筋トレ達成目標回数
+
+bool minus = false;     //判定がマイナスの時にtrueにする変数
+bool plus = false;      //判定がプラスの時にtrueにする変数
 
 void setup() {
   M5.begin();
   M5.IMU.Init();
+  pinMode(M5LED, OUTPUT);
+  digitalWrite(M5LED, HIGH);
+  
   M5.Lcd.setRotation(3);
   Serial.begin(115200);
   delay(10);
@@ -45,28 +53,29 @@ void measure(){
   
   sprite.setCursor(0,5,2);
   sprite.fillCircle(X0 + (int)(accV * R3), Y0 - (int)(accU * R3), 8, RED);
-
-  // 傾き補正
-  M5.update();
-  if(M5.BtnA.wasPressed()){
-    accZ = max(min(accZ, 1.0), -1.0);
-    theta = 180 / PI * asin(accZ);
-  }
-  
 }
 
 /**
  * 筋トレの回数を記録するためのメソッド
 */
-void counter(){
-  switch(pattern){
+void training(){
+  switch(training_pattern){
     case 0 : {  //スクワッドの処理(Y軸メイン)
-      Serial.println(accY);   //確認用
-      if(fabs(oldY - accY) >= 0.3){
-        count += 0.5;
-        delay(425);  //判定後、少し待つ
 
-        //エラーで回数を追加されるのを阻止するため現在の値を入れる
+      if(accY < oldY && fabs(oldY - accY) >= 0.4 && !minus) { //現在のY軸がマイナスかつ絶対値の誤差が0.4の時(一度も処理を通ってない場合)
+        minus = true;
+        delay(250);
+      }
+      if(accY > oldY && fabs(oldY - accY) >= 0.4 && !plus){   //現在のY軸がプラスかつ絶対値の誤差が0.4の時(一度も処理を通ってない場合)
+        plus = true;
+        delay(250);
+      } 
+
+      if(plus && minus){  //上下どちらも通ったら
+        count++;
+        plus = false;
+        minus = false;
+
         measure();
         oldY = accY;
       }
@@ -74,25 +83,49 @@ void counter(){
     }
     case 1 : {  //腕立ての処理(Z軸メイン)
       Serial.println(accW); //確認用
-      if(fabs(oldW - accW) >= 0.3){
-        count++;
-        delay(1000);
 
-        //エラーで回数を追加されるのを阻止するため現在の値を入れる
+      if(accW < oldW && fabs(oldW - accW) >= 0.2 && !minus) { //現在のZ軸がマイナスかつ絶対値の誤差が0.3の時(一度も処理を通ってない場合)
+        minus = true;
+        delay(200);
+      }
+      if(accW > oldW && fabs(oldW - accW) >= 0.2 && !plus){   //現在のZ軸がプラスかつ絶対値の誤差が0.3の時(一度も処理を通ってない場合)
+        plus = true;
+        delay(200);
+      }
+
+      Serial.println(plus);
+      Serial.println(minus);
+
+      if(plus && minus){  //上下どちらも通ったら
+        count++;
+        plus = false;
+        minus = false;
+
         measure();
         oldW = accW;
       }
       break;
     }
     case 2 : {  //腹筋の処理()
-      Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //確認用
-      if(fabs(oldY - accY) >= 0.3 && fabs(oldW - accW) >= 0.4){
-        count++;
-        delay(1500);
+      Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG\n", accU, accY, accW);  //確認用
+      
+      if(fabs(oldY - accY) >= 0.3){ //Y軸の絶対値の誤差が0.4かつZ軸の絶対値の誤差が0.3
+        if(accY < oldY && !minus) { //現在のY軸がマイナスの時(一度も処理を通ってない場合)
+          minus = true;
+          delay(400);
+        }
+        if(accY > oldY && !plus){   //現在のY軸がプラスの時(一度も処理を通ってない場合)
+          plus = true;
+          delay(400);
+        }
+      }
 
-        //エラーで回数を追加されるのを阻止するため現在の値を入れる
+      if(plus && minus){  //上下どちらも通ったら
+        count++;
+        plus = false;
+        minus = false;
+
         measure();
-        oldY = accY;
         oldW = accW;
       }
       break;
@@ -105,36 +138,39 @@ void counter(){
   Serial.println();
 }
 
-bool minus = false;
-bool plus = false;
-
-void test_counter(){
-  Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //確認用
-  if(accY < oldY && fabs(oldY - accY) >= 0.3) minus = true;
-  if(accY > oldY && fabs(oldY - accY) >= 0.3) plus = true;
-  if(plus && minus)count++;
-
-  Serial.println(count);
-}
+int stopper = 0;
 
 void loop() {
-    measure();  //加速度計測メソッド呼び出し
-    test_counter();  //回数計測メソッド呼び出し
+  M5.update();
+  if(M5.BtnA.wasPressed()){ //Aボタンが押されたら計測開始
+    digitalWrite(M5LED, HIGH);
 
-    if(count >= GOAL){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
-      approval = true;
-      if(approval) {
-        Serial.println("クリア");
-        Serial.println();
+    while(true){
+      measure();  //加速度計測メソッド呼び出し
+      training();  //筋トレ回数計測メソッド呼び出し
+
+      if(count >= GOAL && stopper == 0){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
+        approval = true;
+        digitalWrite(M5LED,LOW);
+        M5.Beep.beep();
+        delay(1000);
+        M5.Beep.end();
+
+        count = 0;
+
+        break;
       }
+
+      //前回の値を保存しておく処理
+      measure();
+      oldU = accU;
+      oldY = accY;
+      oldW = accW;
+
+      delay(90);   //  チャタリング防止&判定の時間を少し緩める
     }
-
-    //前回の値を保存しておく処理
-    oldU = accU;
-    oldY = accY;
-    oldW = accW;
-
-    delay(150);   //  チャタリング防止&判定の時間を少し緩める
+  }
+  delay(10);
 }
 
 //Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //加速度を確認するためのコード
