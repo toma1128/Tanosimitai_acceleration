@@ -7,24 +7,24 @@
 #include <BLEServer.h>
 #include <BLE2902.h>
 
-BLEServer* pServer = NULL;
-BLECharacteristic* pCharacteristic = NULL;
-bool deviceConnected = false;
-bool oldDeviceConnected = false;
-uint32_t value = 0;
+// BLEServer* pServer = NULL;
+// BLECharacteristic* pCharacteristic = NULL;
+// bool deviceConnected = false;
+// bool oldDeviceConnected = false;
+// uint32_t value = 0;
 
 #define SERVICE_UUID        "8262" //識別UUID(長いとうまくいかないらしい)
 #define CHARACTERISTIC_UUID "3749"
 
-class MyServerCallbacks: public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-    };
+// class MyServerCallbacks: public BLEServerCallbacks {
+//     void onConnect(BLEServer* pServer) {
+//       deviceConnected = true;
+//     };
 
-    void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-    }
-};
+//     void onDisconnect(BLEServer* pServer) {
+//       deviceConnected = false;
+//     }
+// };
 
 
 TFT_eSprite sprite = TFT_eSprite(&M5.Lcd);
@@ -57,33 +57,33 @@ void setup() {
   pinMode(M5LED, OUTPUT);     //LEDの初期設定
   digitalWrite(M5LED, HIGH);  //LEDを消す(念のため)
 
-  BLEDevice::init("HackU2024_Tanosimitai"); //BLE用の名前
+  //BLEDevice::init("HackU2024_Tanosimitai"); //BLE用の名前
 
   // Create the BLE Server
-  pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+  // pServer = BLEDevice::createServer();
+  // pServer->setCallbacks(new MyServerCallbacks());
 
-  // Create the BLE Service
-  BLEService *pService = pServer->createService(SERVICE_UUID);
+  // // Create the BLE Service
+  // BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create a BLE Characteristic
-  pCharacteristic = pService->createCharacteristic(
-                      CHARACTERISTIC_UUID,
-                      BLECharacteristic::PROPERTY_READ   |
-                      BLECharacteristic::PROPERTY_WRITE  |
-                      BLECharacteristic::PROPERTY_NOTIFY |
-                      BLECharacteristic::PROPERTY_INDICATE
-                    );
+  // // Create a BLE Characteristic
+  // pCharacteristic = pService->createCharacteristic(
+  //                     CHARACTERISTIC_UUID,
+  //                     BLECharacteristic::PROPERTY_READ   |
+  //                     BLECharacteristic::PROPERTY_WRITE  |
+  //                     BLECharacteristic::PROPERTY_NOTIFY |
+  //                     BLECharacteristic::PROPERTY_INDICATE
+  //                   );
 
-  // Start the service
-  pService->start();
+  // // Start the service
+  // pService->start();
 
-  // Start advertising
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
-  BLEDevice::startAdvertising();
+  // // Start advertising
+  // BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  // pAdvertising->addServiceUUID(SERVICE_UUID);
+  // pAdvertising->setScanResponse(false);
+  // pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
+  // BLEDevice::startAdvertising();
 
   
   M5.Lcd.setRotation(3);
@@ -193,26 +193,26 @@ void training(){
 /**
  * BLE通信して値を渡すメソッド
 */
-void BLE_unlock(){
-  if (deviceConnected) {  
+// void BLE_unlock(){
+//   if (deviceConnected) {  
 
-    pCharacteristic->setValue(approval);
-    pCharacteristic->notify();
-    value++;
-    delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
-  }
-  // disconnecting
-  if (!deviceConnected && oldDeviceConnected) {
-    delay(500); // give the bluetooth stack the chance to get things ready
-    pServer->startAdvertising(); // restart advertising
-    oldDeviceConnected = deviceConnected;
-  }
-    // connecting
-  if (deviceConnected && !oldDeviceConnected) {
-    // do stuff here on connecting
-    oldDeviceConnected = deviceConnected;
-  }
-}
+//     pCharacteristic->setValue(approval);
+//     pCharacteristic->notify();
+//     value++;
+//     delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+//   }
+//   // disconnecting
+//   if (!deviceConnected && oldDeviceConnected) {
+//     delay(500); // give the bluetooth stack the chance to get things ready
+//     pServer->startAdvertising(); // restart advertising
+//     oldDeviceConnected = deviceConnected;
+//   }
+//     // connecting
+//   if (deviceConnected && !oldDeviceConnected) {
+//     // do stuff here on connecting
+//     oldDeviceConnected = deviceConnected;
+//   }
+// }
 
 void loop() {
   M5.update();
@@ -233,7 +233,7 @@ void loop() {
         M5.Beep.end();              //音を消す
 
         count = 0;                  //回数の初期化
-        BLE_unlock();               //BLEメソッド呼び出し、鍵を開ける
+        //BLE_unlock();               //BLEメソッド呼び出し、鍵を開ける
         break;                      //ループから出る
       }
 
