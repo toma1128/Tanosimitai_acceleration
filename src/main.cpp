@@ -14,6 +14,7 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  //確認用メッセージ
   Serial.print("Last Packet Sent to: ");
   Serial.println(macStr);
   Serial.print("Last Packet Send Status: ");
@@ -24,12 +25,9 @@ void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+  //確認用メッセージ
   Serial.printf("Last Packet Recv from: %s\n", macStr);
   Serial.printf("Last Packet Recv Data(%d): ", data_len);
-  for ( int i = 0 ; i < data_len ; i++ ) {
-    Serial.print(data[i]);
-    Serial.print(" ");
-  }
   Serial.println("");
 }
 
@@ -49,7 +47,7 @@ float x, y, z, theta;
 int R1 = 20, R2 = 40, R3 = 60;
 int X0 = 120, Y0 = 67;
 
-int training_pattern;        //筋トレの種類を切り替えるための変数
+int training_pattern;   //筋トレの種類を切り替えるための変数
 int count = 0;          //筋トレした回数をカウントする変数
 bool approval = false;  //部屋を開けるのを承認する変数
 const int GOAL = 10;    //筋トレ達成目標回数
@@ -187,7 +185,7 @@ void training(){
   }
 
   Serial.println();
-  Serial.println(count);
+  Serial.println(count);  //現在の回数を表示
   Serial.println();
 }
 
@@ -211,9 +209,10 @@ void loop() {
         uint8_t data[1] = {1};
         esp_err_t result = esp_now_send(slave.peer_addr, data, sizeof(data));
         Serial.print("Send Status: ");
-        if (result == ESP_OK) {
+        if (result == ESP_OK) { //成功の場合
           Serial.println("Success");
-        } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
+        }   //↓エラーが起きた場合
+        else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
           Serial.println("ESPNOW not Init.");
         } else if (result == ESP_ERR_ESPNOW_ARG) {
           Serial.println("Invalid Argument");
