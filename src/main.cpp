@@ -35,6 +35,8 @@ TFT_eSprite sprite = TFT_eSprite(&M5.Lcd);  //速度センサーで使う変数
 
 const int M5LED = 10;   //LEDのピン番号
 
+const int M5LED = 10;   //LEDのピン番号
+
 float OFFSET_X = 0, OFFSET_Y = 0, OFFSET_Z = -0.08;
 float accX;
 float accY;             //Y軸
@@ -198,14 +200,14 @@ void loop() {
     while(true){
       measure();  //加速度計測メソッド呼び出し
       training();  //筋トレ回数計測メソッド呼び出し
-      
+     
       if(count >= GOAL){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
-
+        approval = true;
         digitalWrite(M5LED,LOW);    //LEDをつける
         M5.Beep.beep();             //一秒間音を鳴らす
         delay(1000);
         M5.Beep.end();              //音を消す
-
+				
         uint8_t data[1] = {1};
         esp_err_t result = esp_now_send(slave.peer_addr, data, sizeof(data));
         Serial.print("Send Status: ");
@@ -241,4 +243,5 @@ void loop() {
   }
   delay(10);
 }
+
 //Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //加速度を確認するためのコード
