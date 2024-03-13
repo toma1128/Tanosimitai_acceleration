@@ -50,10 +50,6 @@ int R1 = 20, R2 = 40, R3 = 60;
 int X0 = 120, Y0 = 67;
 
 char* muscleExplanation[] = {"スクワット","  腕立て","  腹筋"}; //運動を表示するとき使う
-bool uiNum0,uiNum1,uiNum2 = false;                             //一回だけ回ってほしくて回ったらtrueにする(UI表示)
-// UIの変更に使うtrueで初期画面
-bool ui1 = true;    //true 初期画面 false 準備画面
-bool ui2 = true;    //true 準備画面 false 筋トレ画面
 
 int training_pattern;   //筋トレの種類を切り替えるための変数
 int count = 0;          //筋トレした回数をカウントする変数
@@ -117,7 +113,6 @@ void training(){
         plus = true;
         delay(200);
       }
-
       Serial.println(plus);
       Serial.println(minus);
 
@@ -143,7 +138,6 @@ void training(){
           delay(400);
         }
       }
-
       if(plus && minus){  //上下どちらも通ったら
         count++;
         plus = false;
@@ -164,9 +158,7 @@ void training(){
 
 //初期画面のUI
 void UI0(){
-
   M5.Lcd.setTextSize(2);
-  
   printEfont("準備開始",0,60);
   // 再生ボタン
   M5.Lcd.fillTriangle(50, 165, 50, 120, 85, 142, WHITE);
@@ -175,19 +167,25 @@ void UI0(){
 //準備画面のUI
 void UI1(){
   M5.Lcd.setTextSize(1);
-  printEfont("今回の運動は",0,0);
-
-  printEfont(muscleExplanation[training_pattern],30,45);
-  
-  printEfont("   首に付け",0,100);
-  printEfont("  ボタンを押し",0,120);
-  printEfont("  音が鳴るまで",0,140);
-  printEfont("運動してください",0,160);
+  printEfont("今回の運動は",15,0);
+  printEfont(muscleExplanation[training_pattern],30,45);  //筋トレの種類
+  printEfont("首に付け",30,100);
+  printEfont("ボタンを押し",18,120);
+  printEfont("音が鳴るまで",17,140);
+  printEfont("運動してください",3,160);
   
   M5.Lcd.setTextSize(2);
-    
   M5.Lcd.setCursor(38,200);
   M5.Lcd.println("START");
+}
+
+void training_now_UI(){
+  M5.Beep.beep();             //一秒間音を鳴らす
+  delay(200);
+  M5.Beep.end();              //音を消す
+  M5.Lcd.begin();
+  M5.Lcd.setTextSize(1);
+  printEfont(muscleExplanation[training_pattern],30,45);
 }
 
 void setup() {
@@ -198,7 +196,6 @@ void setup() {
 
   M5.Lcd.setRotation(0);      //画面を縦にする
   UI0();
-  uiNum0 =! uiNum0;
   Serial.begin(115200);
 
   // ESP-NOW初期化
@@ -223,7 +220,6 @@ void setup() {
   // ESP-NOWコールバック登録
   esp_now_register_send_cb(OnDataSent);
   //esp_now_register_recv_cb(OnDataRecv);
-
   delay(10);
 }
 
@@ -233,32 +229,33 @@ void loop() {
   if(M5.BtnA.wasPressed()){ //Aボタンが押されたら計測開始
     digitalWrite(M5LED, HIGH);  //LEDを消す
     training_pattern = random(3);  //ランダムに筋トレを選択
-    Serial.println(training_pattern);
-    ui1 = !ui1;
+    //training_pattern = 0;   //プレゼン用コード
     M5.Lcd.begin();
-    UI1();
 
+    bool once = true;   //UI1を一度だけ出すための変数
+    while(true){
+      M5.update();
+      if(once){         //STARTボタンを押した一回につき一度だけ通るようにする
+        UI1();
+        once = false;
+      }
+      if(M5.BtnA.wasPressed()) break;
+      delay(10);
+    }
+    training_now_UI();
     while(true){
       measure();  //加速度計測メソッド呼び出し
       training();  //筋トレ回数計測メソッド呼び出し
-     
+
       if(count >= GOAL){    //筋トレが「goal」回終わると、部屋を開けるための変数がtrueになる
         approval = true;
         digitalWrite(M5LED,LOW);    //LEDをつける
         M5.Beep.beep();             //一秒間音を鳴らす
         delay(1000);
         M5.Beep.end();              //音を消す
-				
+        
         uint8_t data[1] = {1};
         esp_err_t result = esp_now_send(slave.peer_addr, data, sizeof(data));
-        Serial.print("Send Status: ");
-        if (result == ESP_OK) { //成功の場合
-          Serial.println("Success");
-        }
-
-        ui1,ui2 = true;                 //UIを初期に戻す
-        uiNum0,uiNum1,uiNum2 = false;   //ui表示メソッドに入る値を初期化
-
         count = 0;                  //回数の初期化
         break;                      //ループから出る
       }
@@ -271,8 +268,7 @@ void loop() {
 
       delay(90);   //判定の時間を少し緩める
     }
+    once = true;    //次回の筋トレのために戻しておく
   }
   delay(10);
 }
-
-//Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG", accU, accY, accW);  //加速度を確認するためのコード
