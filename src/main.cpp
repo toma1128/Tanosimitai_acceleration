@@ -34,7 +34,6 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 // }
 
 TFT_eSprite sprite = TFT_eSprite(&M5.Lcd);  //速度センサーで使う変数
-
 const int M5LED = 10;   //LEDのピン番号
 
 float OFFSET_X = 0, OFFSET_Y = 0, OFFSET_Z = -0.08;
@@ -92,7 +91,6 @@ void training(){
         plus = true;
         delay(250);
       } 
-
       if(plus && minus){  //上下どちらも通ったら
         count++;
         plus = false;
@@ -104,7 +102,6 @@ void training(){
       break;
     }case 1 : {  //腕立ての処理(Z軸メイン)
       //Serial.println(accW); //確認用
-
       if(accW < oldW && fabs(oldW - accW) >= 0.2 && !minus) { //現在のZ軸がマイナスかつ絶対値の誤差が0.3の時(一度も処理を通ってない場合)
         minus = true;
         delay(200);
@@ -115,7 +112,6 @@ void training(){
       }
       Serial.println(plus);
       Serial.println(minus);
-
       if(plus && minus){  //上下どちらも通ったら
         count++;
         plus = false;
@@ -127,7 +123,6 @@ void training(){
       break;
     }case 2 : {  //腹筋の処理(Z軸メイン)
       //Serial.printf("X:%5.2fG\nY:%5.2fG\nZ:%5.2fG\n", accU, accY, accW);  //確認用
-      
       if(fabs(oldY - accY) >= 0.3){ //Y軸の絶対値の誤差が0.4かつZ軸の絶対値の誤差が0.3
         if(accY < oldY && !minus) { //現在のY軸がマイナスの時(一度も処理を通ってない場合)
           minus = true;
